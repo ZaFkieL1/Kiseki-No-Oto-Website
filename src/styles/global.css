@@ -1,0 +1,2576 @@
+/* ==========================================================================
+   KISEKI_OS — design tokens + chassis
+   Two voices: mono = the machine, Zen Kaku = the humans.
+   The accent hue is not a brand constant; it is whatever record is loaded.
+   ========================================================================== */
+
+@property --hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 340;
+}
+@property --lvl-bass {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --lvl-mid {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --lvl-high {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+:root {
+  /* --- surface ------------------------------------------------------- */
+  --void: #06070b;
+  --panel: #0b0d13;
+  --panel-2: #101319;
+  --line: rgba(180, 196, 235, 0.1);
+  --line-strong: rgba(180, 196, 235, 0.22);
+
+  /* --- ink ----------------------------------------------------------- */
+  --text: #eef1f7;
+  --dim: #6b7385;
+  --dimmer: #444a59;
+
+  /* --- signal -------------------------------------------------------- */
+  --ice: #7ce4ff; /* system status only. never decoration. */
+  --amber: #ffc44a; /* exactly one job: depleted stock / archived */
+  --live: #3fdd91; /* exactly one job: a file is in the bucket. KERNEL only. */
+  /* HSL, not OKLCH, so canvas and CSS can be handed the identical colour. */
+  --hot: hsl(var(--hue) 88% 62%);
+  --hot-ink: hsl(var(--hue) 95% 78%);
+  --hot-dim: hsl(var(--hue) 70% 45%);
+
+  /* --- type ---------------------------------------------------------- */
+  --mono: "Martian Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --sans: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic",
+    system-ui, sans-serif;
+
+  --t-hud: 0.625rem; /* telemetry, column heads */
+  --t-sm: 0.6875rem;
+  --t-base: 0.8125rem;
+
+  /* --- metrics ------------------------------------------------------- */
+  --rail: 15.5rem;
+  --dock: 4.75rem;
+  --bar: 2.25rem;
+  --gut: clamp(1rem, 2.2vw, 2rem);
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden; /* the chassis does not scroll. panes do. */
+  overscroll-behavior: none;
+}
+
+/* The machine speaks in mono, wide and quiet. */
+.mono {
+  font-family: var(--mono);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.jp {
+  font-family: var(--sans);
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  color: var(--dimmer);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 1px solid var(--ice);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--hot);
+  color: var(--void);
+}
+
+/* ==========================================================================
+   BOOT
+   ========================================================================== */
+
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--void);
+  display: grid;
+  align-content: center;
+  justify-content: start;
+  padding: var(--gut) clamp(1rem, 6vw, 5rem);
+  font-family: var(--mono);
+  font-size: clamp(0.625rem, 1.15vw, 0.8125rem);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  line-height: 1.85;
+}
+
+.boot--out {
+  animation: boot-out 480ms var(--ease-snap) forwards;
+}
+
+@keyframes boot-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-3px, -2px) skewX(-1.2deg);
+    filter: brightness(2.4);
+  }
+  34% {
+    transform: translate(4px, 1px) skewX(0.8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+
+.boot__line {
+  display: flex;
+  gap: 0.75em;
+  white-space: pre;
+  animation: line-in 180ms var(--ease) both;
+}
+
+@keyframes line-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+}
+
+.boot__ok {
+  color: var(--ice);
+}
+.boot__label {
+  color: var(--text);
+}
+.boot__note {
+  color: var(--dim);
+}
+.boot__brand {
+  color: var(--hot-ink);
+  letter-spacing: 0.3em;
+}
+
+.boot__bar {
+  color: var(--hot);
+  letter-spacing: -0.06em; /* close the gaps between block glyphs */
+}
+
+/* The last beat before the handoff. Accented like the closing line of the
+   view-switch overlay, because it is the same event at a different scale. */
+.boot__gate {
+  margin-top: 1.5rem;
+  color: var(--hot-ink);
+  letter-spacing: 0.22em;
+}
+
+.boot__skip {
+  position: fixed;
+  right: var(--gut);
+  bottom: var(--gut);
+  color: var(--dimmer);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  translate: 0 0.18em;
+  background: var(--hot);
+  animation: blink 1.06s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   CHASSIS
+   ========================================================================== */
+
+.os {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: var(--bar) 1fr var(--dock);
+  position: relative;
+  isolation: isolate;
+  animation: os-in 620ms var(--ease-snap) both;
+}
+
+@keyframes os-in {
+  from {
+    opacity: 0;
+    transform: scale(1.012);
+  }
+}
+
+/* ---- top bar ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding-inline: var(--gut);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(var(--panel), var(--void));
+  /* Nothing in the bar may push the chassis wider than the screen. */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bar > * {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.bar__spacer {
+  flex: 1 1 auto;
+}
+
+/* On a phone the mark and the language switch are what matter; the kana is
+   decoration and the catalogue number is repeated in the dock below. */
+@media (max-width: 26rem) {
+  .bar {
+    gap: 0.75rem;
+  }
+
+  .bar .jp {
+    display: none;
+  }
+}
+
+.bar__mark {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: var(--t-hud);
+  letter-spacing: 0.26em;
+  color: var(--text);
+}
+
+.bar__mark em {
+  font-style: normal;
+  color: var(--hot);
+}
+
+.bar__stat {
+  display: none;
+  gap: 0.5em;
+  align-items: center;
+}
+
+@media (min-width: 46rem) {
+  .bar__stat {
+    display: flex;
+  }
+}
+
+/* ---- language ----
+   Both words are always legible and the current one is lit, so the control
+   shows the state and the alternative at once. Unlike `.bar__stat` it survives
+   the narrow breakpoint: on a phone the status readouts are decoration, and
+   this is the one thing in the bar a reader might actually need. */
+.bar__lang {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--dimmer);
+  letter-spacing: 0.12em;
+  transition: color 140ms var(--ease);
+}
+
+.bar__lang:hover {
+  color: var(--dim);
+}
+
+.bar__lang [aria-current="true"] {
+  color: var(--hot-ink);
+}
+
+.bar__lang i {
+  font-style: normal;
+  opacity: 0.4;
+}
+
+/* ---- body ---- */
+.body {
+  display: grid;
+  grid-template-columns: var(--rail) 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 62rem) {
+  .body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+/* ---- rail ---- */
+.rail {
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--void) 60%);
+}
+
+@media (max-width: 62rem) {
+  .rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0;
+}
+
+@media (max-width: 62rem) {
+  .nav {
+    flex-direction: row;
+    padding: 0;
+  }
+}
+
+.nav__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9em;
+  padding: 0.5rem var(--gut);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  position: relative;
+  transition: color 140ms var(--ease), background 140ms var(--ease);
+  white-space: nowrap;
+}
+
+.nav__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--hot);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 200ms var(--ease-snap);
+}
+
+.nav__item:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.nav__item[aria-current="true"] {
+  color: var(--text);
+}
+
+.nav__item[aria-current="true"]::before {
+  transform: scaleY(1);
+}
+
+.nav__num {
+  color: var(--dimmer);
+  font-weight: 400;
+}
+
+.nav__item[aria-current="true"] .nav__num {
+  color: var(--hot);
+}
+
+@media (max-width: 62rem) {
+  .nav__item {
+    padding: 0.7rem 1rem;
+  }
+  .nav__item::before {
+    top: auto;
+    height: 2px;
+    width: 100%;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .nav__item[aria-current="true"]::before {
+    transform: scaleX(1);
+  }
+}
+
+/* ---- telemetry ---- */
+.telemetry {
+  margin-top: auto;
+  padding: var(--gut);
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 0.55rem;
+}
+
+@media (max-width: 62rem) {
+  .telemetry {
+    display: none;
+  }
+}
+
+.tel {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.tel__v {
+  color: var(--text);
+  font-size: var(--t-hud);
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tel__v--ice {
+  color: var(--ice);
+}
+
+.dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ice);
+  translate: 0 -1px;
+  margin-right: 0.5em;
+}
+
+.dot--live,
+.dot--transmitting {
+  background: var(--hot);
+  box-shadow: 0 0 0 0 var(--hot);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+/* Fetching is the one state that is *waiting* rather than reporting, so it is
+   the one that blinks — impatient where transmitting is a slow pulse. */
+.dot--fetching {
+  background: var(--ice);
+  animation: blink 700ms steps(2, jump-none) infinite;
+}
+
+.dot--no-signal {
+  background: var(--amber);
+}
+
+@keyframes blink {
+  to {
+    opacity: 0.25;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--hue) 88% 62% / 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px hsl(var(--hue) 88% 62% / 0);
+  }
+}
+
+.meter {
+  width: 4.5rem;
+  height: 3px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ice);
+  transition: width 220ms var(--ease);
+}
+
+/* ==========================================================================
+   VIEWPORT
+   ========================================================================== */
+
+.viewport {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pane {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+  animation: pane-in 340ms var(--ease-snap) both;
+}
+
+/* Opacity only, deliberately: a transform here would make the pane a
+   containing block and break the fixed-position catalogue bleed. */
+@keyframes pane-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.pane::-webkit-scrollbar {
+  width: 9px;
+}
+.pane::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+}
+
+/* access transition */
+.access {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--void);
+  display: grid;
+  align-content: center;
+  justify-content: center;
+  gap: 0.9rem;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: fade-in 100ms linear both;
+}
+
+.access__log {
+  display: grid;
+  gap: 0.4rem;
+  min-height: 5.5rem;
+}
+
+.access__line {
+  animation: line-in 140ms var(--ease) both;
+}
+
+.access__line:last-child {
+  color: var(--hot-ink);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.access__bar {
+  width: min(22rem, 60vw);
+  height: 2px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.access__bar i {
+  position: absolute;
+  inset: 0;
+  background: var(--hot);
+  transform-origin: left;
+  /* Duration is overridden inline per sequence length. */
+  animation: access 380ms var(--ease) both;
+}
+
+@keyframes access {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* section furniture shared by every pane */
+.pane__head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: var(--gut);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: color-mix(in oklab, var(--void) 88%, transparent);
+  backdrop-filter: blur(14px);
+  z-index: 2;
+}
+
+.pane__title {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.pane__count {
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   SYSTEM — the label states what it is, then plays something
+   ========================================================================== */
+
+.sys {
+  display: grid;
+}
+
+.sys__section {
+  padding: clamp(3rem, 8vh, 6rem) var(--gut);
+  border-top: 1px solid var(--line);
+}
+
+.sys__head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+}
+
+/* ---- identity ---- */
+/* Three rows — eyebrow, the identity itself, the floor — and two columns off
+   one rule. The signal column spans down to the floor so its rule runs the
+   whole height: the black to the left of it is framed rather than left over.
+   Height is taken from the chassis, since the pane is the only thing that
+   scrolls and a percentage would have nothing definite to resolve against. */
+.identity {
+  min-height: calc(100dvh - var(--bar) - var(--dock));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem);
+  grid-template-rows: auto 1fr auto;
+  column-gap: clamp(1.5rem, 5vw, 5rem);
+  padding: var(--gut);
+}
+
+.identity__eyebrow {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.identity__focus {
+  color: var(--dimmer);
+  text-align: right;
+}
+
+.identity__lede {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+  display: grid;
+  justify-items: start;
+  gap: 0.35rem;
+  padding-block: clamp(1.25rem, 4vh, 3rem);
+}
+
+.identity__signal {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  display: flex;
+  min-width: 0;
+  border-left: 1px solid var(--line);
+  padding: clamp(1.25rem, 4vh, 3rem) 0 0 clamp(1.25rem, 2.5vw, 2.5rem);
+}
+
+.reveal {
+  animation: reveal 620ms var(--ease-snap) both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* The logo art has an opaque black ground, not transparency. Screen-blending
+   it over a matching void background knocks the black out and keeps the brush
+   glow — hence the isolated stacking context and the explicit ground. */
+.identity__logo {
+  isolation: isolate;
+  background: var(--void);
+  /* Width-driven, because the crop below only tolerates being cut top and
+     bottom — so the viewport-height term is what keeps the lockup from
+     pushing the statement off the screen on a short window. */
+  width: min(100%, 48vh, 44rem);
+  /* Crops the dead space above and below the brushwork in the square file. */
+  aspect-ratio: 1024 / 720;
+  overflow: hidden;
+  margin: 0 0 0.3rem;
+  /* Only seen if the image fails: the alt text still reads as the wordmark. */
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.identity__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  mix-blend-mode: screen;
+}
+
+/* Sits directly under the lockup: the kana is the other half of the name, so
+   it is the largest thing between the brush and the statement. */
+.identity__kana {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+  letter-spacing: 0.42em;
+  color: var(--hot-ink);
+  margin: 0.15rem 0 0.35rem;
+}
+
+/* One row, not a stack: the label's range reads as a band it is tuned across,
+   and laid out this way it holds the width under the lockup. */
+.identity__genres {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.5rem;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 300;
+  letter-spacing: 0.24em;
+  color: var(--text);
+}
+
+.identity__genres li::before {
+  content: "";
+  display: inline-block;
+  width: 1.1rem;
+  height: 1px;
+  background: var(--hot);
+  translate: 0 -0.28em;
+  margin-right: 0.7rem;
+}
+
+.identity__rule {
+  width: min(26rem, 55%);
+  border: 0;
+  border-top: 1px solid var(--line-strong);
+  margin: clamp(1.25rem, 3vh, 2.25rem) 0 0;
+}
+
+/* The one other loud thing on the screen. Held to ~14ch so it breaks into the
+   three lines it is written as. */
+.identity__tagline {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 3.4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  max-width: 14ch;
+  margin: clamp(1rem, 2.5vh, 1.75rem) 0 clamp(1.5rem, 3.5vh, 2.5rem);
+  text-wrap: balance;
+}
+
+.identity__cue {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  color: var(--dimmer);
+  animation: reveal 620ms var(--ease-snap) 1200ms both;
+}
+
+/* ---- current signal ---- */
+.signal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.signal__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.signal__head .jp {
+  margin-left: auto;
+  font-size: var(--t-sm);
+}
+
+/* Height-aware like the lockup: on a short window the sleeve gives up width
+   first, so the readout at the foot of the rule stays on screen. */
+.signal__bay {
+  position: relative;
+  width: min(100%, 34vh);
+  aspect-ratio: 1;
+  margin: 0.9rem 0 0.75rem;
+}
+
+.signal__state {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.signal__cat {
+  margin-left: auto;
+  color: var(--dimmer);
+}
+
+.signal__artist {
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: clamp(1.25rem, 1.9vw, 1.75rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 0.45rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.signal__title {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--hot-ink);
+  margin: 0.2rem 0 0;
+}
+
+.signal__meta {
+  font-size: var(--t-hud);
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  margin: 0.35rem 0 0;
+}
+
+.signal .scrub {
+  margin-top: 0.9rem;
+}
+
+.signal .wave--hero {
+  height: 3rem;
+}
+
+.signal__actions {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  margin-top: 1.1rem;
+}
+
+/* Pinned to the foot of the rule, level with the scroll cue on the other side
+   — the two make the bottom edge of the screen read as a rail. */
+.signal__index {
+  margin: auto 0 0;
+  padding-top: clamp(1rem, 3vh, 2rem);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.signal__row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.signal__row dd {
+  margin: 0 0 0 auto;
+  font-size: var(--t-sm);
+  letter-spacing: 0.1em;
+}
+
+/* Stacked under the lockup rather than beside it. The rule moves to the top
+   edge so the column still reads as hung off a line. */
+@media (max-width: 62rem) {
+  .identity {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
+    min-height: auto;
+  }
+
+  .identity__signal {
+    grid-column: 1;
+    grid-row: 3;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding: clamp(1.5rem, 4vh, 2.5rem) 0 0;
+  }
+
+  .identity__cue {
+    grid-row: 4;
+    margin-top: 2rem;
+  }
+
+  .signal {
+    max-width: 26rem;
+  }
+
+  .identity__logo {
+    width: min(100%, 30rem);
+  }
+}
+
+/* ---- the name ---- */
+.name__grid {
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+}
+
+.name__row {
+  display: grid;
+  grid-template-columns: 7rem auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1rem, 4vw, 3rem);
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.name__romaji {
+  margin: 0;
+}
+
+.name__glyph {
+  margin: 0;
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  line-height: 1;
+  color: var(--hot);
+}
+
+.name__meaning {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.24em;
+  color: var(--text);
+}
+
+.name__translation {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: clamp(1.25rem, 3vw, 2.25rem);
+  letter-spacing: -0.02em;
+  margin: 2rem 0 0;
+  color: var(--hot-ink);
+}
+
+/* ---- manifest ---- */
+.manifest__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: start;
+}
+
+@media (max-width: 62rem) {
+  .manifest__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.manifest__headline {
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: clamp(1.5rem, 4vw, 2.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0 0 1.25rem;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.manifest__text {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--dim);
+  max-width: 46ch;
+  margin: 0 0 1.5rem;
+}
+
+.manifest__creed {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  line-height: 1.9;
+  color: var(--hot-ink);
+  border-left: 1px solid var(--hot);
+  padding-left: 1.25rem;
+  margin: 0;
+  max-width: 36ch;
+}
+
+.manifest__stats {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.stat {
+  display: grid;
+  gap: 0.3rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.stat__v {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1rem 2rem;
+  margin-top: clamp(2rem, 5vh, 3.5rem);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.contact__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.contact__links a {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.12em;
+  color: var(--hot-ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 160ms var(--ease);
+}
+
+.contact__links a:hover {
+  border-color: var(--hot);
+}
+
+/* `.contact__unset` used to hold "channel not set" under a Contact heading.
+   Both are gone: with no networks on file the row is not drawn at all. */
+
+/* ---- support ----
+   Quieter than the social links above it — an ask should be findable, not
+   insistent — and it warms to the accent on hover rather than sitting lit. */
+.support {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-top: 1.5rem;
+}
+
+.support__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.1rem;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 160ms var(--ease), background 160ms var(--ease);
+}
+
+.support__cta:hover {
+  border-color: var(--hot);
+  background: hsl(var(--hue) 88% 62% / 0.08);
+}
+
+.support__lines {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.support__title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: var(--t-base);
+  line-height: 1.2;
+}
+
+.support__note {
+  color: var(--dim);
+}
+
+.support__cta:hover .support__note {
+  color: var(--hot-ink);
+}
+
+/* The last line on the page. It states a fact; it does not need weight. */
+.support__legal {
+  margin: 0;
+  color: var(--dimmer);
+}
+
+.bay {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+  aspect-ratio: 1;
+}
+
+.bay__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* the artwork breathes with the low end */
+  scale: calc(1 + var(--lvl-bass) * 0.022);
+  transition: scale 60ms linear;
+}
+
+.bay__frame {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--line-strong);
+  pointer-events: none;
+}
+
+.bay__frame::before,
+.bay__frame::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--hot);
+}
+
+.bay__frame::before {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.bay__frame::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.field__v {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+/* ==========================================================================
+   TRANSPORT
+   ========================================================================== */
+
+.dock {
+  border-top: 1px solid var(--line);
+  background: linear-gradient(0deg, var(--panel) 0%, var(--void) 100%);
+  display: grid;
+  grid-template-columns: auto minmax(9rem, 15rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-inline: var(--gut);
+}
+
+.dock__tail {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Narrow: the scrubber wraps to its own row rather than disappearing —
+   seeking must stay reachable at every width. */
+@media (max-width: 62rem) {
+  :root {
+    --dock: 6.75rem;
+  }
+
+  .dock {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: 0.4rem 1rem;
+    padding-block: 0.5rem;
+  }
+
+  .dock > .wave {
+    grid-column: 1 / -1;
+  }
+
+  .dock__tail {
+    display: none;
+  }
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tbtn {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  transition: color 130ms var(--ease), background 130ms var(--ease);
+  border-radius: 1px;
+}
+
+.tbtn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tbtn--play {
+  width: 2.6rem;
+  height: 2.6rem;
+  color: var(--void);
+  background: var(--hot);
+}
+
+.tbtn--play:hover {
+  color: var(--void);
+  background: var(--hot-ink);
+}
+
+.tbtn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.tbtn--play svg {
+  width: 17px;
+  height: 17px;
+}
+
+.dock__now {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.dock__title {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.dock__t {
+  font-weight: 700;
+  font-size: var(--t-base);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock__clock {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dock__clock b {
+  color: var(--text);
+  font-weight: 400;
+}
+
+/* ---- waveform scrubber ---- */
+.wave {
+  position: relative;
+  height: 2.4rem;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.wave--hero {
+  height: 3.5rem;
+}
+
+.wave canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Generous target: the strip is short, so the hit area reaches past it. */
+.wave__hit {
+  position: absolute;
+  inset: -0.6rem 0;
+}
+
+.wave__hit[aria-disabled="true"] {
+  cursor: progress;
+}
+
+.scrub {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.scrub__times {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Primary action: explore the catalogue, or start the transmission. */
+.playcta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1.6rem;
+  border: 1px solid var(--hot);
+  color: var(--hot-ink);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 400;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  justify-self: start;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+
+.playcta:hover {
+  background: var(--hot);
+  color: var(--void);
+}
+
+.playcta svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.vol {
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+@media (min-width: 60rem) {
+  .vol {
+    display: flex;
+  }
+}
+
+.vol input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 4.5rem;
+  height: 1px;
+  background: var(--line-strong);
+  cursor: pointer;
+}
+
+.vol input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  background: var(--text);
+  border-radius: 50%;
+}
+
+.vol input::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  background: var(--text);
+  border: 0;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   RELEASE SCENES
+   Each release is a viewport-sized environment, not a card. The artwork makes
+   the atmosphere; the type stays quiet on top of it.
+   ========================================================================== */
+
+.pane--scenes {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 62rem) {
+  /* Proximity below the desktop breakpoint: a scene taller than the viewport
+     must never trap the reader between snap points. */
+  .pane--scenes {
+    scroll-snap-type: y proximity;
+  }
+}
+
+/* Overlays the first scene rather than pushing it down: the negative margin
+   cancels the height it would otherwise claim in the snap container. */
+.rel__bar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 2.75rem;
+  margin-bottom: -2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-inline: var(--gut);
+  background: linear-gradient(
+    hsl(230 30% 3% / 0.92) 40%,
+    hsl(230 30% 3% / 0)
+  );
+}
+
+.rel__sort {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.rel__sortbtn {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+  transition: color 140ms var(--ease);
+}
+
+.rel__sortbtn:hover {
+  color: var(--text);
+}
+
+.rel__sortbtn[aria-pressed="true"] {
+  color: var(--hot);
+}
+
+/* ---- the scene ---- */
+.scene {
+  position: relative;
+  min-height: 100%;
+  scroll-snap-align: start;
+  display: grid;
+  align-items: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+
+.scene__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--gut);
+  align-items: center;
+  padding: calc(var(--bar) + var(--gut)) var(--gut) var(--gut);
+  width: 100%;
+}
+
+/* Asymmetric, and mirrored on alternate records so scrolling reads as a
+   sequence of spreads rather than one template repeating. */
+.scene__art {
+  grid-column: 2 / span 4;
+}
+
+/* Hold the sleeve's footprint while it is unmounted, so mounting artwork
+   never shifts the layout under the reader. */
+.scene__art:empty::before {
+  content: "";
+  display: block;
+  width: 100%;
+  max-width: 31.25rem;
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.scene__info {
+  grid-column: 7 / span 5;
+  translate: 0 2rem;
+}
+
+.scene--flip .scene__art {
+  grid-column: 8 / span 4;
+}
+
+.scene--flip .scene__info {
+  grid-column: 2 / span 5;
+  translate: 0 -2rem;
+}
+
+/* ---- environment ---- */
+.env {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--void);
+}
+
+.env__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Tier 1 — dedicated wide artwork, barely scaled. */
+.env--desktop .env__art {
+  scale: 1.14;
+  opacity: 0.9;
+}
+
+/* Tier 2 — the square cover blown up into an atmosphere. */
+.env--cover .env__art {
+  scale: 2;
+  filter: blur(54px) saturate(1.35);
+  opacity: 0.5;
+}
+
+/* Tier 3 — colour alone, which also covers the gap while a lazy image loads. */
+.env__glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      70% 60% at 30% 35%,
+      hsl(var(--hue) 85% 45% / 0.4),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 70% at 78% 70%,
+      hsl(calc(var(--hue) + 40) 80% 40% / 0.3),
+      transparent 70%
+    );
+}
+
+/* Dark at the edges, artwork breathing in the middle, floor for the type. */
+.env__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+      90deg,
+      hsl(230 30% 3% / 0.94) 0%,
+      hsl(230 30% 3% / 0.4) 42%,
+      hsl(230 30% 3% / 0.55) 68%,
+      hsl(230 30% 3% / 0.94) 100%
+    ),
+    linear-gradient(0deg, hsl(230 30% 3% / 0.92) 0%, transparent 55%);
+}
+
+.env--holding {
+  background: var(--void);
+}
+
+/* ---- sleeve ---- */
+.sleeve {
+  position: relative;
+  width: 100%;
+  max-width: 31.25rem; /* 500px ceiling from the spec */
+  min-width: 0;
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.sleeve__img,
+.sleeve__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.sleeve__edge {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+
+/* ---- information ---- */
+.rel__info {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  max-width: 30rem;
+}
+
+.rel__id {
+  color: var(--hot);
+}
+
+.rel__artist {
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  margin: 0.15rem 0 0;
+  text-wrap: balance;
+}
+
+.rel__title {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  line-height: 1.25;
+  color: var(--hot-ink);
+  margin: 0 0 0.6rem;
+}
+
+.rel__meta {
+  font-size: var(--t-hud);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0;
+}
+
+.rel__date {
+  margin: 0;
+}
+
+/* ---- running order ----
+   Five rows stand open and the rest scroll, so a twelve-track album cannot
+   push the actions off the scene. The row height is fixed rather than
+   content-sized: that is what makes "five" exact, and what leaves the sixth
+   row cut off at the fold instead of ending flush like a complete list. */
+.rel__list {
+  --rel-row: 1.75rem;
+  /* Pulled out by the row padding on both sides, so a row's hover field can
+     sit behind the number without the number indenting from the column. */
+  width: calc(100% + 0.9rem);
+  margin-inline: -0.45rem;
+  overflow-x: hidden;
+  /* + 1px for the rule above the first row, which border-box counts in. */
+  max-height: calc(var(--rel-row) * 5 + 1px);
+  margin-block: 0.4rem 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  /* The catalogue is a snap container: reaching the end of this list must not
+     hand the wheel on to the next record. */
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--line);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* Only when there is more than fits — a permanent fade on a five-track record
+   would promise a sixth song that does not exist. */
+.rel__list--more {
+  mask-image: linear-gradient(
+    180deg,
+    #000 calc(100% - 1.6rem),
+    transparent 100%
+  );
+}
+
+/* A finger needs more than a 28px band. The list keeps its five open rows
+   either way — the scene is min-height, so it grows rather than clipping. */
+@media (pointer: coarse) {
+  .rel__list {
+    --rel-row: 2.5rem;
+  }
+}
+
+.rel__item {
+  display: block;
+}
+
+/* The rows are pulled out past the text column so the hover field has room to
+   sit behind the number without indenting it. */
+.rel__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  height: var(--rel-row);
+  padding-inline: 0.45rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Only a row whose song has a link is a control. */
+.rel__row--open {
+  transition: background 160ms var(--ease);
+}
+
+.rel__row--open:hover,
+.rel__row--open:focus-visible {
+  background: hsl(var(--hue) 88% 62% / 0.14);
+  outline: none;
+}
+
+.rel__row--open:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--hot);
+}
+
+.rel__row--open:hover .rel__song,
+.rel__row--open:focus-visible .rel__song {
+  color: var(--hot-ink);
+}
+
+.rel__row--open:hover .rel__go,
+.rel__row--open:focus-visible .rel__go {
+  color: var(--hot);
+  opacity: 1;
+  translate: 2px -2px;
+}
+
+/* Dim rather than hidden: on a touch screen there is no hover to reveal it,
+   and the arrow is what says the row goes somewhere. */
+.rel__go {
+  font-size: var(--t-hud);
+  color: var(--dimmer);
+  opacity: 0.7;
+  transition: translate 160ms var(--ease), opacity 160ms var(--ease),
+    color 160ms var(--ease);
+}
+
+/* An inert row keeps the column so the titles stay aligned with the links. */
+.rel__row:not(.rel__row--open) .rel__go {
+  visibility: hidden;
+}
+
+.rel__n {
+  font-size: var(--t-hud);
+  letter-spacing: 0.1em;
+  color: var(--dimmer);
+  font-variant-numeric: tabular-nums;
+}
+
+.rel__song {
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Only drawn on a record whose songs name different acts. */
+.rel__by {
+  font-family: var(--sans);
+  font-size: var(--t-hud);
+  color: var(--dim);
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+/* ---- bandcamp ---- */
+.bandcamp {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1.4rem;
+  border: 1px solid var(--hot);
+  color: var(--hot-ink);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: background 180ms var(--ease), color 180ms var(--ease);
+}
+
+.bandcamp:hover {
+  background: var(--hot);
+  color: var(--void);
+}
+
+.bandcamp__arrows {
+  position: relative;
+  width: 1em;
+  height: 1em;
+}
+
+.bandcamp__out,
+.bandcamp__in {
+  position: absolute;
+  inset: 0;
+  transition: opacity 180ms var(--ease), translate 180ms var(--ease);
+}
+
+.bandcamp__in {
+  opacity: 0;
+  translate: -6px 0;
+}
+
+.bandcamp:hover .bandcamp__out {
+  opacity: 0;
+  translate: 6px -6px;
+}
+
+.bandcamp:hover .bandcamp__in {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* The system narrating the handover, only while the pointer is on it. */
+.bandcamp__note {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.5rem);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 180ms var(--ease);
+}
+
+.bandcamp:hover .bandcamp__note {
+  opacity: 1;
+}
+
+.bandcamp--unset {
+  border: 1px dashed var(--line-strong);
+  color: var(--dimmer);
+  padding: 0.85rem 1.4rem;
+  margin: 0;
+}
+
+/* Drawn only on a record that has a preview uploaded, so it is never a play
+   button with nothing behind it. Quieter than the release link beside it: the
+   destination is the record, this is a taste of it. */
+.rel__preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  transition: color 140ms var(--ease);
+}
+
+.rel__preview:hover {
+  color: var(--text);
+}
+
+.rel__preview svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+
+/* ---- scroll position ---- */
+.rel__progress {
+  position: fixed;
+  right: var(--gut);
+  bottom: calc(var(--dock) + var(--gut));
+  z-index: 4;
+  display: grid;
+  justify-items: end;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.rel__counter {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.1em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rel__counter i {
+  color: var(--dimmer);
+  font-style: normal;
+}
+
+.rel__track {
+  width: 1px;
+  height: 4rem;
+  background: var(--line-strong);
+  position: relative;
+}
+
+.rel__track i {
+  position: absolute;
+  inset: 0;
+  background: var(--hot);
+  transform-origin: top;
+  transition: transform 400ms var(--ease);
+}
+
+@media (max-width: 62rem) {
+  .scene__inner {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-top: calc(var(--bar) + var(--gut));
+    justify-items: center;
+  }
+
+  .scene__art,
+  .scene__info,
+  .scene--flip .scene__art,
+  .scene--flip .scene__info {
+    grid-column: 1;
+    translate: none;
+  }
+
+  .sleeve {
+    max-width: min(70vw, 20rem);
+  }
+
+  .rel__info {
+    justify-items: center;
+    text-align: center;
+  }
+
+  /* Less aggressive backdrop on small screens — there is not enough room to
+     separate type from a busy image. */
+  .env--cover .env__art {
+    opacity: 0.32;
+  }
+
+  .env--desktop .env__art {
+    opacity: 0.6;
+  }
+
+  .env__scrim {
+    background: linear-gradient(
+      0deg,
+      hsl(230 30% 3% / 0.95) 20%,
+      hsl(230 30% 3% / 0.6) 100%
+    );
+  }
+
+  .rel__progress {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   TABULAR METADATA
+   Shared by the events and shop ledgers. The release catalogue used to be a
+   table here; it is a scroll of scenes now, and its styles went with it.
+   ========================================================================== */
+
+.row__meta {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   ARTIST RECORDS
+   ========================================================================== */
+
+.artists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+}
+
+.artist {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: var(--gut);
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: start;
+  text-align: left;
+  width: 100%;
+  transition: background 160ms var(--ease);
+}
+
+/* The card is an `<a>` when the act has a profile and a `<div>` when it does
+   not, so the lift belongs to the linked one only — a card that brightens
+   under the pointer and then does nothing is a promise it cannot keep. */
+.artist--linked {
+  color: inherit;
+  text-decoration: none;
+}
+
+.artist--linked:hover,
+.artist--linked:focus-visible {
+  background: rgba(255, 255, 255, 0.028);
+  outline: none;
+}
+
+.artist--linked:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--hot);
+}
+
+.artist--linked:hover .artist__name,
+.artist--linked:focus-visible .artist__name {
+  color: var(--hot-ink);
+}
+
+.artist__name {
+  transition: color 160ms var(--ease);
+}
+
+/* Sits under the stats, so the card reads as information first and a
+   destination second. */
+.artist__go {
+  display: inline-block;
+  margin-top: 0.9rem;
+  color: var(--dim);
+  transition: color 160ms var(--ease), translate 160ms var(--ease);
+}
+
+.artist--linked:hover .artist__go,
+.artist--linked:focus-visible .artist__go {
+  color: var(--hot);
+  translate: 2px 0;
+}
+
+.artist__sigil {
+  width: 5.5rem;
+  height: 5.5rem;
+  border: 1px solid var(--line-strong);
+}
+
+.artist__name {
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 1.35rem;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.15rem;
+}
+
+.artist__kana {
+  font-size: var(--t-sm);
+  letter-spacing: 0.24em;
+  color: var(--dimmer);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 0.5625rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hot-ink);
+  border: 1px solid hsl(var(--hue) 70% 45% / 0.5);
+  padding: 0.18em 0.5em;
+}
+
+.artist__stats {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+
+/* ==========================================================================
+   EVENTS / SHOP / ARCHIVE
+   ========================================================================== */
+
+.stack {
+  display: grid;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: baseline;
+  padding: 1.1rem var(--gut);
+  border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 46rem) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .entry__date {
+    grid-column: 1 / -1;
+  }
+}
+
+.entry__name {
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.entry__sub {
+  font-size: var(--t-sm);
+  color: var(--dim);
+  margin: 0.15rem 0 0;
+}
+
+.state {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Derived from the date, never stored — see eventState() in catalogue.ts. */
+.state--scheduled {
+  color: var(--ice);
+}
+.state--ended {
+  color: var(--dimmer);
+}
+
+/* ---- events ---- */
+.evt {
+  display: grid;
+  gap: 0.35rem;
+  padding: clamp(1.25rem, 3vh, 2rem) var(--gut);
+  border-bottom: 1px solid var(--line);
+}
+
+.evt--ended {
+  color: var(--dim);
+}
+
+.evt__head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.evt__name {
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0.2rem 0 0;
+}
+
+.evt__sub {
+  margin: 0;
+}
+
+.evt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.evt__link {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hot-ink);
+  border-bottom: 1px solid transparent;
+  transition: border-color 140ms var(--ease);
+}
+
+.evt__link:hover {
+  border-bottom-color: var(--hot);
+}
+
+.evt__unset {
+  color: var(--dimmer);
+}
+
+/* The running order. The times are machine facts, the acts are people. */
+.sched {
+  margin-top: 1.25rem;
+  border-left: 1px solid var(--line-strong);
+  padding-left: clamp(1rem, 2vw, 1.75rem);
+  animation: reveal 320ms var(--ease-snap) both;
+}
+
+.sched__tz {
+  margin: 0 0 0.75rem;
+}
+
+.sched__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sched__slot {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+}
+
+.sched__time {
+  font-size: var(--t-sm);
+  color: var(--hot-ink);
+  min-width: 8.5rem;
+}
+
+.sched__artist {
+  font-family: var(--sans);
+  font-weight: 700;
+}
+
+.sched__kana {
+  font-size: var(--t-sm);
+}
+
+.empty {
+  padding: var(--gut);
+  color: var(--dimmer);
+}
+
+.log {
+  padding: var(--gut);
+  display: grid;
+  gap: 0.15rem;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+.log__line {
+  display: grid;
+  grid-template-columns: 6.5rem 5rem minmax(0, 1fr);
+  gap: 1rem;
+  color: var(--dim);
+  padding: 0.22rem 0;
+}
+
+.log__line:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.log__year {
+  color: var(--hot);
+}
+
+@media (max-width: 46rem) {
+  .log__line {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+  .log__hide {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   AMBIENT — extremely restrained. off unless the deck is running.
+   ========================================================================== */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.ambient canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.4s var(--ease);
+}
+
+.ambient--live canvas {
+  opacity: 1;
+}
+
+.scan {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.022) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 35%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* ==========================================================================
+   CURSOR
+   ========================================================================== */
+
+@media (hover: hover) and (pointer: fine) {
+  .os,
+  .boot,
+  body {
+    cursor: none;
+  }
+
+  .cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 90;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .cursor__cross::before,
+  .cursor__cross::after {
+    content: "";
+    position: absolute;
+    background: var(--text);
+  }
+
+  .cursor__cross::before {
+    width: 11px;
+    height: 1px;
+    translate: -5px 0;
+  }
+
+  .cursor__cross::after {
+    width: 1px;
+    height: 11px;
+    translate: 0 -5px;
+  }
+
+  .cursor--hot .cursor__cross::before,
+  .cursor--hot .cursor__cross::after {
+    background: var(--hot);
+  }
+
+  .cursor__ring {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    translate: -13px -13px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    transition: width 200ms var(--ease-snap), height 200ms var(--ease-snap),
+      translate 200ms var(--ease-snap), border-color 200ms var(--ease);
+  }
+
+  .cursor--hot .cursor__ring {
+    width: 40px;
+    height: 40px;
+    translate: -20px -20px;
+    border-color: var(--hot);
+  }
+
+  .cursor__label {
+    position: absolute;
+    left: 26px;
+    top: 10px;
+    font-family: var(--mono);
+    font-size: 0.5625rem;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--hot-ink);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+  }
+
+  .cursor--hot .cursor__label {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media not all and (hover: hover) {
+  .cursor {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   ACCESSIBILITY FLOOR
+   ========================================================================== */
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.noscript {
+  padding: 3rem var(--gut);
+  max-width: 42rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .bay__canvas {
+    scale: 1;
+  }
+
+  /* No snap-driven motion, no parallax scaling on the environments. */
+  .pane--scenes {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+
+  .env--desktop .env__art {
+    scale: 1;
+  }
+
+  .scan {
+    display: none;
+  }
+
+  .ambient canvas {
+    opacity: 0 !important;
+  }
+}

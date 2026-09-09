@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  One page, because the site is one page: the catalogue, the roster and the
+  events are views inside a single island, not routes, so there is nothing else
+  with a URL to give a crawler. If routing is ever added, this file is generated
+  rather than hand-kept — @astrojs/sitemap does it from the route list.
+
+  The console is not here, and must not be.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://kiseki-no-oto.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

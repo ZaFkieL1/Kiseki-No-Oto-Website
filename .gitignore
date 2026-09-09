@@ -1,0 +1,45 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# cloudflare / wrangler local state (miniflare caches, dev traces)
+.wrangler/
+
+# claude code local worktrees
+.claude/
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# KERNEL — the filename IS the address, so the real page stays out of the
+# public repo. `docs/kernel-page.astro.example` is the committed copy: drop it
+# into `src/pages/` under a name nobody guesses and that name becomes the URL.
+src/pages/kernel-*.astro
+
+# firestore rules carry the editor allowlist; see firestore.rules.example
+firestore.rules
+
+# wrangler local secrets
+.dev.vars
+
+# the label's own audio — real releases are not repo content
+public/*.mp3

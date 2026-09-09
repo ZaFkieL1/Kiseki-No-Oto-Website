@@ -1,0 +1,61 @@
+---
+import AdminOS from "../components/admin/AdminOS.tsx";
+import "../styles/global.css";
+import "../styles/admin.css";
+
+/*
+ * KERNEL, at an address nobody guesses — TEMPLATE.
+ *
+ * **The filename is the URL.** It was `/admin`, which is the first path anyone
+ * tries; renaming the file is the whole change, and renaming it again is how
+ * the address is rotated.
+ *
+ * Which is why this copy lives in `docs/` and not in `src/pages/`: a public
+ * repository that carries the page carries the address with it. To run the
+ * console, copy this file to `src/pages/kernel-<something-nobody-guesses>.astro`
+ * — the `.astro.example` extension is what keeps `astro check` from reading it
+ * as a page whose relative imports do not resolve from `docs/`
+ * — `src/pages/kernel-*.astro` is gitignored, so the name you choose stays
+ * yours. It must NOT stay in `docs/`; anything under `src/pages/` is a route,
+ * and this file being one is the whole point.
+ *
+ * The editor allowlist it gates is `PUBLIC_EDITORS` in `.env` (see
+ * `.env.example`), not a list typed into the source.
+ *
+ * Be clear about what this is worth: it keeps the door out of sight, it does
+ * not lock it. The lock is `firestore.rules` and the `EDITORS` Wrangler secret,
+ * both of which refuse a stranger who finds this page and signs in — the
+ * console would load and every write would be refused. Obscurity on top of that
+ * is worth having; obscurity *instead* of it would be worth nothing.
+ *
+ * There is deliberately no redirect from `/admin` and no entry in a robots
+ * file: either one would point straight back at this address.
+ *
+ * The title says nothing either. A tab reading "KERNEL — KISEKI NO OTO" over
+ * the shoulder is the same leak by a slower route.
+ */
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <meta name="theme-color" content="#06070b" />
+    <title>·</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;600&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="kernel-body">
+    <!-- client:only, not client:load: this console reads localStorage, and
+         server-rendering it would paint the seed and then swap. -->
+    <AdminOS client:only="react" />
+  </body>
+</html>

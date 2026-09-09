@@ -1,0 +1,871 @@
+/* ==========================================================================
+   KERNEL — the maintenance console.
+   Same tokens as the OS, none of the theatre. This one is a tool.
+   ========================================================================== */
+
+/* `global.css` hides the native cursor so the OS can draw its own. KERNEL does
+   not mount that component and should not: this is a tool, and a cursor that
+   lags behind the pointer is a liability when you are aiming at a 1.9rem
+   button or dragging a file. Give the real one back — the class outranks the
+   bare `body` selector that took it away. */
+.kernel-body {
+  overflow: hidden;
+  cursor: auto;
+}
+
+/*
+ * `min-width: 0` runs all the way down this file, on every grid and flex child
+ * that holds text or a control. Without it a child's default `auto` minimum
+ * refuses to shrink past its content, one long email address or one seven
+ * column track row pushes the console wider than the screen, and the *whole
+ * page* scrolls sideways. The only thing here allowed to scroll horizontally
+ * is the nav rail, and that on purpose.
+ */
+.kern {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: 2.75rem 1fr;
+  background: var(--void);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.kern__bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-inline: var(--gut);
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  min-width: 0;
+}
+
+/* The mark and the sign-out button hold their size; everything between them
+   gives way, longest first. */
+.kern__mark,
+.kern__reset {
+  flex: 0 0 auto;
+}
+
+.kern__mark {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.kern__mark em {
+  font-style: normal;
+  color: var(--hot-ink);
+}
+
+.kern__origin,
+.kern__who {
+  color: var(--dim);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* An address is the one thing in this bar that can be arbitrarily long. */
+.kern__who {
+  flex: 0 1 auto;
+}
+
+/* ---- the door ---- */
+.gate {
+  height: 100dvh;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 1rem;
+  padding: var(--gut);
+  max-width: 32rem;
+  margin-inline: auto;
+  background: var(--void);
+  color: var(--text);
+  cursor: auto;
+}
+
+.gate__lede {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  line-height: 1.2;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.kern__reset {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px solid var(--line-strong);
+  padding: 0.35rem 0.8rem;
+  transition: color 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.kern__reset:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.kern__body {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+}
+
+.kern__rail {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  padding-top: 0.75rem;
+  min-width: 0;
+}
+
+.kern__work {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+}
+
+/* Socials is one document, so its panel has no master list beside it and
+   takes the whole width rather than leaving a 22rem column of nothing. */
+.kern__work:has(> .kern__form:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ---- master list ---- */
+.kern__list {
+  border-right: 1px solid var(--line);
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.kern__listhead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem var(--gut);
+  background: var(--void);
+  border-bottom: 1px solid var(--line);
+}
+
+.kern__listhead--flush {
+  position: static;
+  padding-inline: 0;
+  background: transparent;
+}
+
+.kern__new {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hot-ink);
+}
+
+.kern__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem var(--gut);
+  border-bottom: 1px solid var(--line);
+  transition: background 120ms var(--ease);
+}
+
+.kern__row:hover {
+  background: var(--panel);
+}
+
+.kern__row[aria-current="true"] {
+  background: var(--panel-2);
+  box-shadow: inset 2px 0 0 var(--hot);
+}
+
+.kern__row .mono {
+  font-size: var(--t-sm);
+  color: var(--dim);
+  /* A catalogue number is one token. KNOCOMP-0001 is long enough to want to
+     break on a narrow screen, and half a number on each line is not a number. */
+  white-space: nowrap;
+}
+
+/* Human names in the human face, even in a tool. */
+.kern__rowname {
+  font-family: var(--sans);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kern__rowstate {
+  margin-left: auto;
+}
+
+.kern__onair {
+  color: var(--hot);
+  width: 0.75em;
+}
+
+/* ---- detail form ---- */
+.kern__form {
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--gut);
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.kern__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+
+.kern__section {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.kern__preview {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.kern__onairbox {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.kern__dependents {
+  margin: 0;
+}
+
+/* A record filed under the wrong prefix. Amber, like every other "this is not
+   right yet" in the console — never green, which means a file is in the bucket. */
+.kern__renumber {
+  display: grid;
+  justify-items: start;
+  gap: 0.6rem;
+  border: 1px solid var(--amber);
+  padding: 0.9rem 1rem;
+  /* Text and a button in a grid child still have to be allowed to be narrower
+     than their content, or a long number pans the whole console. */
+  min-width: 0;
+}
+
+.kern__renumber p {
+  margin: 0;
+  color: var(--amber);
+}
+
+.fld {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.fld__name {
+  color: var(--dim);
+}
+
+.fld__input {
+  font-family: var(--mono);
+  font-size: var(--t-base);
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  padding: 0.5rem 0.65rem;
+  width: 100%;
+  /* A grid cell holding one of these has to be allowed to be narrower than
+     the text inside it, or the row pushes the console off the screen. */
+  min-width: 0;
+}
+
+/* Derived, not switched off — dashed rather than dimmed, so it does not read
+   as an input waiting to become available. */
+.fld__input--static {
+  border-style: dashed;
+  background: transparent;
+  color: var(--ice);
+}
+
+.fld__input:focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 1px;
+}
+
+.fld--bad .fld__input {
+  border-color: var(--amber);
+}
+
+.fld__hint,
+.fld__error {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+}
+
+.fld__hint {
+  color: var(--dimmer);
+}
+
+.fld__error {
+  color: var(--amber);
+}
+
+.fld--toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.savebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.savebar__danger {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px solid var(--line-strong);
+  padding: 0.8rem 1.2rem;
+}
+
+.savebar__danger:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.savebar__msg {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.savebar__msg--saved {
+  color: var(--ice);
+}
+
+.savebar__msg--error {
+  color: var(--amber);
+}
+
+.kern__blank {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 0.75rem;
+  padding: var(--gut);
+  color: var(--dimmer);
+}
+
+/* ---- track editor ---- */
+/* n · network · link · tools. Same instrument as a track row, two fields. */
+.soc__row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding-block: 0.35rem;
+}
+
+.soc__row .fld__error {
+  grid-column: 2 / -1;
+}
+
+/* n · title · artist · audio · upload · bpm · tools */
+.trk__row {
+  display: grid;
+  grid-template-columns:
+    2rem minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 1.9rem 5rem auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding-block: 0.35rem;
+}
+
+/* Sits against the audio field it fills, and is sized like the row tools
+   rather than like a form control — it is one of the row's instruments. */
+.trk__upload {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--line-strong);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  transition: color 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.trk__upload:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+/* Green, and only green, means there is a file in the bucket for this song.
+   It is the one state the row can show without opening anything. */
+.trk__upload--full {
+  color: var(--live);
+  border-color: var(--live);
+}
+
+.trk__upload--full:hover {
+  color: var(--live);
+  border-color: var(--live);
+  background: color-mix(in srgb, var(--live) 14%, transparent);
+}
+
+.trk__upload svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---- the sheet ----
+   A panel of our own rather than anything the browser draws. `<dialog>` for
+   the behaviour only: Escape, focus held inside, one thing on screen at once. */
+.sheet {
+  border: none;
+  background: none;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  color: var(--text);
+}
+
+.sheet::backdrop {
+  background: hsl(230 30% 3% / 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.sheet__panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: min(34rem, calc(100vw - 2rem));
+  display: grid;
+  gap: 1rem;
+  padding: var(--gut);
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 24px 60px hsl(230 30% 3% / 0.6);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sheet__note {
+  margin: 0;
+}
+
+.trk__bpm {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Opens under the row whose credit it is about, so it is obvious which song
+   the new name is being attached to. */
+.trk__guest {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0 0.25rem 2.5rem;
+}
+
+.trk__guest .kern__new {
+  margin-left: 0;
+  white-space: nowrap;
+}
+
+.trk__guest .kern__new:disabled {
+  color: var(--dimmer);
+  cursor: default;
+}
+
+.trk__n {
+  font-size: var(--t-sm);
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.trk__tools {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.trk__tool {
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--line-strong);
+  color: var(--dim);
+  font-size: var(--t-sm);
+  transition: color 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.trk__tool:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.trk__tool:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* On air. The one accent in the editor, so it reads at a glance. */
+.trk__tool--on {
+  color: var(--hot);
+  border-color: var(--hot);
+}
+
+.trk__tool--drop:hover:not(:disabled) {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.trk__err {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* ---- guest artist ---- */
+.kern__guest {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.kern__guest .kern__new {
+  margin-left: 0;
+  white-space: nowrap;
+}
+
+.kern__guest .kern__new:disabled {
+  color: var(--dimmer);
+  cursor: default;
+}
+
+/* ---- image upload ---- */
+.drop {
+  position: relative;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  padding: 0.9rem;
+  border: 1px dashed var(--line-strong);
+  background: var(--panel);
+  transition: border-color 140ms var(--ease);
+}
+
+.drop--over {
+  border-color: var(--hot);
+}
+
+.drop__preview {
+  display: block;
+  width: 100%;
+  max-width: 11rem;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--line-strong);
+}
+
+.drop__empty {
+  color: var(--dimmer);
+}
+
+/* Audio has no thumbnail, so the box is a strip rather than a panel. */
+.drop--audio {
+  justify-items: stretch;
+}
+
+.drop__has {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.drop__name {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--live);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The browser's own player on purpose: this is a console confirming a file
+   arrived and sounds right, not a place to listen to the record. */
+.drop__audio {
+  width: 100%;
+  max-width: 26rem;
+  height: 2.25rem;
+}
+
+.drop__controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.drop__pick {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hot-ink);
+  border: 1px solid var(--hot);
+  padding: 0.5rem 0.9rem;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+
+.drop__pick:hover:not(:disabled) {
+  background: var(--hot);
+  color: var(--void);
+}
+
+.drop__pick:disabled {
+  color: var(--dim);
+  border-color: var(--line-strong);
+  cursor: progress;
+}
+
+.drop__clear {
+  font-family: var(--mono);
+  font-size: var(--t-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.drop__clear:hover {
+  color: var(--amber);
+}
+
+.drop__file {
+  display: none;
+}
+
+.drop__bar {
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.drop__bar i {
+  display: block;
+  height: 100%;
+  background: var(--hot);
+  transform-origin: left;
+  transition: transform 120ms linear;
+}
+
+.drop__url {
+  margin-top: 0.5rem;
+  font-size: var(--t-sm);
+}
+
+/* ---- schedule editor ---- */
+.sched-edit__row {
+  display: grid;
+  grid-template-columns: 6rem 6rem minmax(0, 1fr) 10rem 2rem;
+  gap: 0.5rem;
+  align-items: center;
+  padding-block: 0.35rem;
+}
+
+.sched-edit__time {
+  font-variant-numeric: tabular-nums;
+}
+
+.sched-edit__drop {
+  color: var(--dim);
+  font-size: var(--t-sm);
+}
+
+.sched-edit__drop:hover {
+  color: var(--amber);
+}
+
+.sched-edit__err {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.kern__flyer {
+  display: block;
+  max-width: min(100%, 22rem);
+  border: 1px solid var(--line-strong);
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 62rem) {
+  .kern__body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  /* **The one thing allowed to scroll sideways.** Four sections do not fit
+     across a phone, and the alternatives are worse: wrapping them costs a
+     second row of chrome on the smallest screen there is, and shrinking them
+     makes four tap targets nobody can hit. So the rail scrolls and the page
+     does not. */
+  .kern__rail {
+    flex-direction: row;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-top: 0;
+    overflow-x: auto;
+    /* Reaching the end of the rail must not start panning the page behind it. */
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .kern__rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Without this they compress into each other instead of scrolling. */
+  .kern__rail .nav__item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .kern__work {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .kern__list {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    max-height: 40vh;
+  }
+
+  /* The origin readout is the least useful thing in the bar and the easiest
+     to lose: the console still says which data it is showing the moment
+     anything is saved. */
+  .kern__origin {
+    display: none;
+  }
+
+  .sched-edit__row {
+    grid-template-columns: 5rem 5rem minmax(0, 1fr) 2rem;
+  }
+
+  .sched-edit__link {
+    grid-column: 1 / -1;
+  }
+
+  /* Number and title on the first line, everything else stacked under it, in
+     the order it is asked for. */
+  .trk__row {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .trk__audio,
+  .trk__bpm,
+  .trk__tools {
+    grid-column: 2;
+  }
+
+  /* The cloud sits with the field it fills rather than on a line of its own. */
+  .trk__upload {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .soc__row {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .soc__row .fld__input:nth-of-type(2),
+  .soc__row .trk__tools {
+    grid-column: 2;
+  }
+
+  .kern__preview {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Phones. Below this the bar cannot hold everything and the forms want the
+   full width. */
+@media (max-width: 30rem) {
+  .kern__bar {
+    gap: 0.6rem;
+  }
+
+  /* The address is already in the account you signed in with; the button to
+     leave is what has to stay reachable. */
+  .kern__who {
+    display: none;
+  }
+
+  .kern__form,
+  .kern__listhead,
+  .kern__row {
+    padding-inline: 1rem;
+  }
+
+  .kern__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sched-edit__row {
+    grid-template-columns: 4.5rem 4.5rem minmax(0, 1fr);
+  }
+
+  .sched-edit__row .trk__tools {
+    grid-column: 1 / -1;
+  }
+
+  .sheet__panel {
+    width: calc(100vw - 1.5rem);
+    padding: 1rem;
+  }
+}

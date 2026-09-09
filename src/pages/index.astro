@@ -1,0 +1,128 @@
+---
+import LabelOS from "../components/LabelOS.tsx";
+import { label, releaseMeta, releases } from "../lib/data";
+import "../styles/global.css";
+
+/* Built from the seed, not the store: this page renders at build time and
+   cannot reach Firestore. The <noscript> listing below shows the shipped
+   catalogue rather than live edits — accepted, not a bug.
+
+   In Spanish, and only Spanish: the language switch lives in the running
+   interface, and this markup is frozen at build time. Spanish is the default
+   the island opens on, so the two agree for every reader who never touches
+   the toggle.
+
+   The head is the entire SEO surface. A crawler runs no JavaScript worth
+   counting on, so what it is told about this label is what is written here and
+   in the <noscript> listing — the interface below is invisible to it. Every
+   line is drawn from `label`, so the description cannot drift from the site. */
+
+const title = `${label.name} — ${label.manifest.headline.es}`;
+const description = `${label.manifest.body.es} ${label.genres.join(" · ")}.`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const share = new URL("/og-image.png", Astro.site).href;
+
+/* Told to Google as a record rather than as prose. `MusicGroup` is the closest
+   thing schema.org has to a label; `sameAs` is deliberately absent, because the
+   social links live in Firestore and this file is built long before anyone can
+   read them. */
+const structured = {
+  "@context": "https://schema.org",
+  "@type": "MusicGroup",
+  name: label.name,
+  alternateName: label.kana,
+  url: canonical,
+  logo: share,
+  image: share,
+  description: description,
+  genre: label.genres,
+  foundingLocation: { "@type": "Country", name: label.origin },
+};
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#06070b" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Generated from the lockup by `pnpm icons`, flattened onto the site's
+         own black so they read the same on any surface. There is no
+         `favicon.svg`: the scaffold shipped one, browsers prefer it over the
+         `.ico`, and it was Astro's rocket — this site was serving somebody
+         else's logo in the tab. A brush lockup does not vectorise anyway. -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- What a link to this page looks like everywhere it gets pasted. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={label.name} />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={share} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={label.logo.alt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={share} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;600&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(structured)}
+    />
+  </head>
+
+  <body>
+    <LabelOS client:load />
+
+    <noscript>
+      <div class="noscript" style="overflow:auto;height:100dvh">
+        <h1 style="font-weight:900;letter-spacing:-0.02em">{label.name}</h1>
+        <p class="hud">{label.kana} · {label.descriptor.es}</p>
+        <p>{label.manifest.body.es}</p>
+        <p>
+          La interfaz del catálogo necesita JavaScript para su motor de audio.
+          Los lanzamientos están listados abajo.
+        </p>
+        <ul class="mono" style="line-height:2;padding-left:1.2rem">
+          {
+            releases.map((release) => (
+              <li>
+                {release.cat} — {release.title} ({releaseMeta(release)})
+                {release.link && (
+                  <>
+                    {" — "}
+                    <a href={release.link} rel="noopener noreferrer">
+                      Abrir el lanzamiento
+                    </a>
+                  </>
+                )}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </noscript>
+  </body>
+</html>

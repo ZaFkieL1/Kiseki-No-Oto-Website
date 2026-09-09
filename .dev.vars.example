@@ -1,0 +1,3 @@
+# Local stand-in for the Wrangler secret. Production gets it from
+# `npx wrangler secret put EDITORS`. This file is gitignored.
+EDITORS="you@example.com"

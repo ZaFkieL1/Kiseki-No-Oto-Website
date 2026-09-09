@@ -1,0 +1,67 @@
+rules_version = '2';
+
+/*
+ * KISEKI NO OTO — catalogue rules.
+ *
+ * The whole catalogue is public to read: the site is the reader, and it has no
+ * accounts. Writes belong to the label.
+ *
+ * This is the TEMPLATE. Copy it to `firestore.rules` (gitignored) and put the
+ * real addresses in `editors()` — a public repository is not the place for a
+ * list of people's email addresses, and this file is the only one of the three
+ * that has to carry them literally.
+ *
+ * To let someone else edit, add their address in three places: `editors()` in
+ * your local `firestore.rules`, `PUBLIC_EDITORS` in `.env`, and the `EDITORS`
+ * Wrangler secret (`npx wrangler secret put EDITORS`). The list here is the
+ * one that counts for the catalogue — `PUBLIC_EDITORS` only decides what the
+ * console shows, and anything shipped to a browser can be edited by whoever is
+ * holding it.
+ *
+ * Paste your filled-in copy into Firebase Console → Firestore Database → Rules.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function editors() {
+      return [
+        'you@example.com'
+      ];
+    }
+
+    function isEditor() {
+      return request.auth != null
+          && request.auth.token.email_verified == true
+          && request.auth.token.email in editors();
+    }
+
+    match /releases/{cat} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+
+    match /artists/{key} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+
+    match /events/{id} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+
+    // Two documents: `featured` — which song the hero boots with — and
+    // `socials`, the list of networks 01 SYSTEM links out to. Already covered
+    // by the wildcard key, so nothing needed changing when the second arrived.
+    match /meta/{key} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+
+    // Anything not named above is closed. A collection added later has to be
+    // granted access on purpose, not inherit it.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

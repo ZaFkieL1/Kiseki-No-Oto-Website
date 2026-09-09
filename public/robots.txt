@@ -1,0 +1,15 @@
+# KISEKI NO OTO
+#
+# One public page, and it is open. There is deliberately no Disallow for the
+# console: a robots file is public, so naming a path here is how you tell every
+# reader of it where that path is. The console is kept out of the index by the
+# `noindex` on the page itself, which does the same job without publishing the
+# address.
+
+User-agent: *
+Allow: /
+
+# The upload and media routes answer to the site itself, not to crawlers.
+Disallow: /api/
+
+Sitemap: https://kiseki-no-oto.com/sitemap.xml

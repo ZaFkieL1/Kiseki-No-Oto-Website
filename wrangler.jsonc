@@ -1,0 +1,48 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"compatibility_date": "2026-08-14",
+	"compatibility_flags": [
+		"global_fetch_strictly_public"
+	],
+	"name": "kiseki-no-oto",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	// Written by `src/pages/api/upload/[...key].ts`, read back by
+	// `src/pages/media/[...key].ts`. The binding IS the credential — there is no
+	// R2 access key anywhere in this repo, in the browser, or in a secret.
+	// Renamed from the generated `kiseki_no_oto` because the routes read it as
+	// `env.BUCKET`.
+	//
+	// The bucket stays PRIVATE. Nothing here needs a public URL, a public
+	// development URL, or a CORS policy: every read is same-origin.
+	"r2_buckets": [
+		{
+			"bucket_name": "kiseki-no-oto",
+			"binding": "BUCKET",
+			"remote": true
+		}
+	],
+	"vars": {
+		// The Firebase project whose sign-in tokens the upload route trusts.
+		// Matches `PUBLIC_FIREBASE_PROJECT_ID` in `.env`.
+		"FIREBASE_PROJECT_ID": "kiseki-no-oto"
+	}
+	//
+	// `EDITORS` — who may write, lowercase and comma separated — is NOT here.
+	// It used to be, and this file is committed: a public repository is not the
+	// place for a list of people's addresses. It is a Wrangler secret now:
+	//
+	//     npx wrangler secret put EDITORS
+	//
+	// and `.dev.vars` (gitignored, see `.dev.vars.example`) supplies it to
+	// `wrangler dev`. The upload route reads `env.EDITORS` either way. Keep it
+	// in step with `PUBLIC_EDITORS` in `.env` and the editors list in your
+	// local `firestore.rules` — three places on purpose, and this is the one
+	// that stops an upload.
+}
