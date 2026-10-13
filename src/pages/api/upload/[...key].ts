@@ -24,9 +24,16 @@ import { MEDIA_PREFIX } from "../../media/[...key]";
 
 export const prerender = false;
 
-/** Google publishes the token-signing keys as JWK, which WebCrypto imports directly. */
-const JWKS_URL =
-  "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
+/**
+ * Google publishes the token-signing keys as JWK, which WebCrypto imports
+ * directly. Two addresses serve the same set; the second is only asked when the
+ * first does not answer, because a refused upload over a flaky key fetch is a
+ * failure of ours, not the editor's.
+ */
+const JWKS_URLS = [
+  "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
+  "https://www.googleapis.com/robot/v1/metadata/jwk/securetoken@system.gserviceaccount.com",
+];
 
 const MAX_BYTES = 96 * 1024 * 1024;
 
@@ -74,8 +81,30 @@ function base64UrlToBytes(value: string): Uint8Array {
 async function signingKeys(): Promise<Record<string, CryptoKey>> {
   if (jwks && jwks.expires > Date.now()) return jwks.keys;
 
-  const response = await fetch(JWKS_URL);
-  if (!response.ok) throw new Error("Could not reach Google's signing keys.");
+  const failures: string[] = [];
+  let response: Response | null = null;
+  for (const url of JWKS_URLS) {
+    try {
+      const attempt = await fetch(url, {
+        headers: { Accept: "application/json", "User-Agent": "kiseki-no-oto-upload" },
+      });
+      if (attempt.ok) {
+        response = attempt;
+        break;
+      }
+      failures.push(`HTTP ${attempt.status}`);
+    } catch (problem) {
+      failures.push(problem instanceof Error ? problem.message : "network error");
+    }
+  }
+
+  if (!response) {
+    // Keys Google rotated out an hour ago still verify tokens signed with them;
+    // a stale set beats refusing every upload while the fetch is failing.
+    if (jwks) return jwks.keys;
+    console.error("JWKS fetch failed:", failures.join("; "));
+    throw new Error(`Could not reach Google's signing keys (${failures.join("; ")}).`);
+  }
 
   const body = (await response.json()) as { keys: (JsonWebKey & { kid?: string })[] };
   const keys: Record<string, CryptoKey> = {};

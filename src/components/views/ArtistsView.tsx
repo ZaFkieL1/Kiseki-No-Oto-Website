@@ -35,7 +35,17 @@ export default function ArtistsView(): React.ReactElement {
           const catalogue = releasesByArtist(artist.key);
           const body = (
             <>
-              <Sigil seed={artist.name.length * 7919 + index * 104729} />
+              {artist.image ? (
+                <img
+                  className="artist__sigil artist__photo"
+                  src={artist.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <Sigil seed={artist.name.length * 7919 + index * 104729} />
+              )}
               <div>
                 <span className="hud">
                   ARTIST_{String(index + 1).padStart(4, "0")}

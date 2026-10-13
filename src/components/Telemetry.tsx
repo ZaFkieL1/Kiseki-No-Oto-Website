@@ -41,7 +41,7 @@ export default function Telemetry({
       <div className="tel">
         <span className="hud">Link</span>
         <span className="meter" aria-hidden="true">
-          <i style={{ width: "100%" }} />
+          <i style={{ scale: "1 1" }} />
         </span>
       </div>
       <div className="tel">

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { uploadImage } from "../../lib/upload";
+import { removeUpload, uploadImage } from "../../lib/upload";
 import { Field } from "./Fields";
 
 /**
@@ -49,6 +49,20 @@ export default function ImageField({
     }
   };
 
+  /* The bytes go with the URL, as in `AudioField` — `removeUpload` leaves
+     anything we did not upload alone. */
+  const drop = async (): Promise<void> => {
+    setFailure("");
+    try {
+      await removeUpload(value);
+      onChange("");
+    } catch (problem) {
+      setFailure(
+        problem instanceof Error ? problem.message : "Could not delete it."
+      );
+    }
+  };
+
   return (
     <Field name={name} hint={hint} error={error || failure}>
       <div
@@ -83,7 +97,7 @@ export default function ImageField({
               : "Upload image"}
           </button>
           {value && percent === null && (
-            <button className="drop__clear" onClick={() => onChange("")}>
+            <button className="drop__clear" onClick={() => void drop()}>
               Remove
             </button>
           )}

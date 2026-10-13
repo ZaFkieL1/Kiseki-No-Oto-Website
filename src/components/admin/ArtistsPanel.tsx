@@ -4,6 +4,7 @@ import { uniqueKey } from "../../lib/store/rules";
 import { validateArtist } from "../../lib/store/validate";
 import { useCatalogue } from "../../lib/hooks";
 import { SaveBar, TextField, ToggleField } from "./Fields";
+import ImageField from "./ImageField";
 import { useEditor } from "./useEditor";
 
 function blankArtist(): Artist {
@@ -16,6 +17,7 @@ function blankArtist(): Artist {
     active: true,
     guest: false,
     link: undefined,
+    image: undefined,
   };
 }
 
@@ -51,6 +53,23 @@ export default function ArtistsPanel(): React.ReactElement {
   /** Frozen once it exists; minted from the name while it does not. */
   const withKey = (value: Artist): Artist =>
     saved ? value : { ...value, key: uniqueKey(value.name, artists) };
+
+  /**
+   * The picture is in R2 the moment the upload returns, so a saved artist's
+   * record is written then and there — the same reasoning as `persistUpload` in
+   * `ReleasesPanel`. A new artist has no document yet; Save carries it.
+   */
+  const persistImage = (image: string): void => {
+    const patch = { image: image || undefined };
+    update(patch);
+    if (!saved || draft === null) return;
+    void editor.commit(
+      { ...draft, ...patch },
+      (value) => validateArtist(value, others),
+      (value) => store.saveArtist(value),
+      image ? "Uploaded and saved." : "Removed and saved."
+    );
+  };
 
   const onSave = (): void =>
     void editor.save(
@@ -152,6 +171,16 @@ export default function ArtistsPanel(): React.ReactElement {
                   .filter(Boolean),
               })
             }
+          />
+
+          <ImageField
+            name="Picture"
+            value={draft.image ?? ""}
+            // Under `covers/` because that is a folder the upload route
+            // accepts; `artists/` keeps it apart from every release's sleeve.
+            folder={`artists/${saved ? draft.key : draft.name.trim() ? uniqueKey(draft.name, artists) : "unfiled"}`}
+            hint="Square works best · unset, the card in 03 ARTISTS draws its generated sigil"
+            onChange={persistImage}
           />
 
           <div className="kern__section">

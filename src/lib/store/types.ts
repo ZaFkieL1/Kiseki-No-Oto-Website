@@ -24,6 +24,11 @@ export interface Artist {
    */
   link?: string;
   /**
+   * The act's picture, uploaded through KERNEL into R2 — a URL, like a sleeve.
+   * Unset, the card draws its generated sigil instead.
+   */
+  image?: string;
+  /**
    * An act that appears on a record without being on the label.
    *
    * Guests are credited on their songs like anyone else — the key still has to
